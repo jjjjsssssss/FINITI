@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINITI AI Agent Terminal v0.1</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FINITI AI Agent Terminal <span class="version">v0.1</span></h1>
+            <div class="capabilities">
+                <div class="capability">Token Analysis</div>
+                <div class="capability">Trend Detection</div>
+                <div class="capability">AI Agent Creation</div>
+            </div>
+        </header>
+        <main>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="controls">
+                        <span class="control"></span>
+                        <span class="control"></span>
+                        <span class="control"></span>
+                    </div>
+                    <div class="terminal-title">FINITI Terminal</div>
+                </div>
+                <div class="chat-area">
+                    <div class="message system">
+                        > System initialized. FINITI AI Agent Terminal v0.1 ready for operation.
+                        > Capabilities: Token Analysis | Trend Detection | AI Agent Creation
+                        > Awaiting input...
+                    </div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="userInput" placeholder="Enter your command...">
+                    <button class="send-btn" id="sendBtn">SEND</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const chatArea = document.querySelector('.chat-area');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function addMessage(content, type = 'user') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'user') {
+                const textNode = document.createTextNode(`> ${content}`);
+                messageDiv.appendChild(textNode);
+            } else {
+                // For system messages, create a wrapper for proper formatting
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = content;
+                messageDiv.appendChild(wrapper);
+            }
+            
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function handleSend() {
+            const message = userInput.value.trim();
+            if (message) {
+                // Add user message to chat
+                addMessage(message);
+                userInput.value = '';
+                
+                // Show processing message
+                const processingDiv = document.createElement('div');
+                processingDiv.className = 'message system';
+                processingDiv.textContent = 'Processing request...';
+                chatArea.appendChild(processingDiv);
+
+                try {
+                    // Make API call to our backend
+                    const response = await fetch('http://localhost:3000/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message })
+                    });
+
+                    const data = await response.json();
+                    
+                    // Remove processing message
+                    processingDiv.remove();
+
+                    if (response.ok) {
+                        // Add AI response to chat
+                        addMessage(data.response, 'system');
+                    } else {
+                        throw new Error(data.error || 'Failed to get response');
+                    }
+                } catch (error) {
+                    // Remove processing message
+                    processingDiv.remove();
+                    
+                    // Show error message
+                    addMessage('Error: Unable to process request. Please try again.', 'system');
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSend();
+            }
+        });
+    </script>
+</body>
+</html>
